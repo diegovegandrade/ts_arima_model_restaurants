@@ -1,16 +1,15 @@
-
 ###Data Preprocessing
 
 import pandas as pd
 
 restaurant_visitors = \
-    pd.read_csv('/home/diegova56/Documentos/Bestpractices/Didi/Santiago Guilloti BC/Data set/restaurants_visitors.csv'
+    pd.read_csv('restaurants_visitors.csv'
                 , keep_default_na=False, na_values=[''])
 date_info = \
-    pd.read_csv('/home/diegova56/Documentos/Bestpractices/Didi/Santiago Guilloti BC/Data set/date_info.csv'
+    pd.read_csv('date_info.csv'
                 , keep_default_na=False, na_values=[''])
 store_info = \
-    pd.read_csv('/home/diegova56/Documentos/Bestpractices/Didi/Santiago Guilloti BC/Data set/store_info.csv'
+    pd.read_csv('store_info.csv'
                 , keep_default_na=False, na_values=[''])
 
 # making the property changes
@@ -20,7 +19,7 @@ restaurant_visitors['visit_datetime'] = \
     pd.to_datetime(restaurant_visitors['visit_datetime'],
                    format='%d/%m/%Y %H:%M').dt.to_period('D')
 rest_tot = restaurant_visitors[['id', 'visit_datetime',
-                               'reserve_visitors']]
+                                'reserve_visitors']]
 
 date_info1['calendar_date'] = date_info1['calendar_date'].astype(str)
 rest_tot['visit_datetime'] = rest_tot['visit_datetime'].astype(str)
@@ -30,11 +29,10 @@ result = pd.merge(left=date_info1, right=rest_tot,
 all_result = pd.merge(left=result, right=store_info, left_on='id',
                       right_on='store_id', how='inner')
 columns_to_drop = ['calendar_date', 'store_id', 'area_name', 'latitude'
-                   , 'longitude']
+    , 'longitude']
 all_result = all_result.drop(columns_to_drop, axis=1)
-all_result.to_csv('/home/diegova56/Documentos/Bestpractices/Didi/Santiago Guilloti BC/Data set/union_all.csv'
+all_result.to_csv('union_all.csv'
                   )
-
 
 ###Time Series
 
@@ -42,19 +40,19 @@ import warnings
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
+
 warnings.filterwarnings("ignore")
 plt.style.use('fivethirtyeight')
 import pandas as pd
 import statsmodels.api as sm
 import matplotlib
+
 matplotlib.rcParams['axes.labelsize'] = 14
 matplotlib.rcParams['xtick.labelsize'] = 12
 matplotlib.rcParams['ytick.labelsize'] = 12
 matplotlib.rcParams['text.color'] = 'k'
 
-
-df = pd.read_csv("/home/diegova56/Documentos/Bestpractices/Didi/Santiago Guilloti BC/Data set/union_all.csv")
-
+df = pd.read_csv("union_all.csv")
 
 rest = df.sort_values('visit_datetime')
 rest.isnull().sum()
@@ -65,10 +63,10 @@ y = rest['reserve_visitors']
 y.plot(figsize=(15, 6))
 plt.show()
 
-
 from pylab import rcParams
+
 rcParams['figure.figsize'] = 18, 8
-decomposition = sm.tsa.seasonal_decompose(y, model='additive',freq=3)
+decomposition = sm.tsa.seasonal_decompose(y, model='additive', freq=3)
 
 fig = decomposition.plot()
 plt.show()
@@ -85,19 +83,19 @@ print('SARIMAX: {} x {}'.format(pdq[2], seasonal_pdq[4]))
 ####Getting parameter selection restaurant’s visitors ARIMA TSM.
 
 for param in pdq:
-  for param_seasonal in seasonal_pdq:
-    try:
-      mod = sm.tsa.statespace.SARIMAX(y,
-                                    order=param,
-                                    seasonal_order=param_seasonal,
-                                    enforce_stationarity=False,
-                                    enforce_invertibility=False)
-    
-      results = mod.fit()
-      print('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
-    except:
-      continue
-      
+    for param_seasonal in seasonal_pdq:
+        try:
+            mod = sm.tsa.statespace.SARIMAX(y,
+                                            order=param,
+                                            seasonal_order=param_seasonal,
+                                            enforce_stationarity=False,
+                                            enforce_invertibility=False)
+
+            results = mod.fit()
+            print('ARIMA{}x{}12 - AIC:{}'.format(param, param_seasonal, results.aic))
+        except:
+            continue
+
 ### Test and results
 mod = sm.tsa.statespace.SARIMAX(y,
                                 order=(1, 1, 1),
@@ -106,7 +104,6 @@ mod = sm.tsa.statespace.SARIMAX(y,
                                 enforce_invertibility=False)
 results = mod.fit()
 print(results.summary().tables[1])
-
 
 pred = results.get_prediction(dynamic=False)
 pred_ci = pred.conf_int()
@@ -120,7 +117,6 @@ ax.set_xlabel('Date')
 ax.set_ylabel('Visitors arrived')
 plt.legend()
 plt.show()
-
 
 pred = results.get_prediction(dynamic=False)
 pred_ci = pred.conf_int()
